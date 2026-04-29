@@ -24,3 +24,8 @@ TARGET_FPS = 30                     # frames por segundo objetivo
 TARGET_WIDTH = 640                  # ancho de procesamiento
 TARGET_HEIGHT = 480                 # alto de procesamiento
 MAINTAIN_ASPECT_RATIO = True        # mantener relación de aspecto
+
+# Añadido: parámetros de evaluación y logging
+EVAL_TOLERANCE_FRAMES = 5       # tolerancia temporal para emparejar eventos
+LOGGING_LEVEL = "INFO"          # DEBUG/INFO/WARNING/ERROR
+RESULTS_DIR = os.path.join(ROOT, "results")
