@@ -1,0 +1,2 @@
+timestamp,video_file,frame_num,time_in_video,track_id_1,track_id_2,confidence,severity,evidence_frame
+2026-05-15T09:40:41.668855,ccd_crash_01.mp4,40,00:00:04,30,30,0.5949,Moderado,crash_ccd_crash_01_f0040_20260515_094041.jpg

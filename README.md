@@ -1,126 +1,105 @@
-# 🚗 Sistema de Detección de Colisiones Vehiculares con YOLO
+# 🚗 Project Crash AI - Forensic Collision Detection System
 
-[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
 [![YOLOv8](https://img.shields.io/badge/YOLO-v8-red.svg)](https://github.com/ultralytics/ultralytics)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![ByteTrack](https://img.shields.io/badge/tracker-ByteTrack-orange.svg)](https://arxiv.org/abs/2110.06864)
+[![Streamlit](https://img.shields.io/badge/dashboard-Streamlit-ff4b4b.svg)](https://streamlit.io)
 
-Sistema inteligente de detección de colisiones en video basado en deep learning. Utiliza **YOLOv8** para detección de vehículos, **tracking multiobjetivo** para seguimiento temporal y **análisis de colisiones** con fusión de múltiples señales.
-
-## 🎯 Características
-
-- ✅ **Detección de vehículos** en tiempo real con YOLOv8
-- ✅ **Tracking multiobjetivo** basado en distancia euclidiana
-- ✅ **Detección avanzada de colisiones** (4 señales fusionadas):
-  - Solapamiento de cajas (IoU)
-  - Cambio de velocidad
-  - Proximidad entre objetos
-  - Persistencia temporal
-- ✅ **Procesamiento de video** frame-by-frame
-- ✅ **Salida anotada** con cajas, IDs y alertas
-- ✅ **Reportes JSON** con timestamps y confianza
-
-## 📦 Estructura del Proyecto
-
-```
-project_crash_ai/
-├── config.py                    # Configuración centralizada
-├── utils.py                     # Funciones auxiliares
-├── collision_logic.py           # Tracking + Colisión
-├── video_processor.py           # Pipeline de video
-├── main.py                      # Punto de entrada
-├── test_implementation.py       # Suite de pruebas
-├── simple_test.py              # Tests rápidos
-├── data/
-│   ├── input/                  # Videos para procesar
-│   └── output/                 # Resultados
-├── SECTION2_SUMMARY.md         # Especificación técnica
-└── requirements.txt            # Dependencias
-```
-
-## 🚀 Instalación Rápida
-
-### Con Conda (Recomendado)
-
-```bash
-# Crear entorno
-conda create -n crash_ai python=3.12
-
-# Activar
-conda activate crash_ai
-
-# Instalar dependencias
-pip install -r requirements.txt
-
-# Instalar xz desde conda-forge
-conda install -c conda-forge xz
-```
-
-### Con Venv
-
-```bash
-python -m venv venv
-.\venv\Scripts\activate  # Windows
-pip install -r requirements.txt
-```
-
-## 💻 Uso Rápido
-
-```bash
-# Procesar todos los videos en data/input/
-python main.py
-
-# Ejecutar pruebas
-python test_implementation.py
-```
-
-## 📊 Arquitectura
-
-```
-[Video Input] → [Frame Processing] → [YOLO Detection] → 
-[Multi-Object Tracking] → [Collision Analysis] → [Annotated Output]
-```
-
-## 📝 Configuración
-
-Edita `config.py` para ajustar thresholds:
-- `CONFIDENCE_THRESHOLD`: Confianza YOLO (default: 0.5)
-- `MAX_DISTANCE`: Distancia máxima tracking (default: 50px)
-- `COLLISION_IOU_THRESHOLD`: IoU para colisión (default: 0.3)
-
-## 📈 Rendimiento
-
-- Velocidad: ~22.5 fps (CPU)
-- Modelo: YOLOv8n (6.2 MB)
-- Python: 3.12.13
-
-## 📚 Documentación
-
-- **SECTION2_SUMMARY.md** - Especificación técnica completa
-- **COMPLETION_REPORT.md** - Reporte de implementación
-
-## 📄 Licencia
-
-MIT License - Ver LICENSE
-
-## 👨‍💻 Autor
-
-Proyecto de IA para detección de colisiones vehiculares.
+Project Crash AI is an advanced computer vision system designed for the **detection and forensic analysis of vehicle collisions** in traffic surveillance (CCTV) footage. Unlike simple detectors, this system employs a multi-signal kinematic fusion of 7 indicators to ensure academic-grade precision and minimize false positives.
 
 ---
 
-**Versión:** 1.0 | **Estado:** ✅ Operacional | **Última actualización:** 2026-04-20
+## 🧐 What does it do?
 
-3) Instalar dependencias adicionales (si es necesario):
+The system processes traffic videos and performs the following tasks:
+1. **Multi-Class Detection:** Identifies cars, buses, trucks, and motorcycles.
+2. **Temporal Tracking:** Assigns a unique ID to each vehicle and maintains its history even during brief occlusions at the moment of impact.
+3. **Collision Analysis:** Evaluates risk using a weighted formula that includes:
+   - **TTC (Time-to-Collision):** Based on the **ISO 22839** standard.
+   - **Velocity Variation:** Detects sudden deceleration post-impact (inelastic impact).
+   - **Overlap (IoU):** Analyzes the intersection and proximity of detection boxes.
+   - **Angular Change:** Detects abnormal trajectory deviations.
+4. **Evidence Gathering:** Automatically captures the exact frame of the accident and generates detailed reports for forensic use.
 
-```powershell
-# En conda:
-& 'D:\miniconda\Scripts\conda.exe' install -n crash_ai <paquete> -y
+---
 
-# O con pip dentro del entorno:
-& 'D:\miniconda\Scripts\conda.exe' run -n crash_ai pip install <paquete>
+## 🛠️ Tech Stack (What does it use?)
+
+- **Computer Vision:** `Ultralytics YOLOv8` for state-of-the-art object detection.
+- **Object Tracking:** `ByteTrack` for stable ID association and occlusion recovery.
+- **Kinematic Logic:** Custom Python implementation for TTC and movement vector calculations.
+- **User Interface:** `Streamlit` for an interactive analysis dashboard.
+- **Data Analysis:** `Pandas`, `Plotly`, and `NumPy`.
+
+---
+
+## 🏗️ System Architecture
+
+The data flow follows a modular pipeline:
+
+```mermaid
+graph LR
+    A[Video Input] --> B[YOLOv8 Detector]
+    B --> C[ByteTrack]
+    C --> D[Collision Engine]
+    D --> E[7-Signal Fusion]
+    E --> F{Is it a Collision?}
+    F -- YES --> G[Capture Forensic Evidence JPG/CSV]
+    F -- YES --> H[Video Annotation]
+    F -- NO --> H
+    H --> I[Dashboard / JSON Report]
 ```
 
-Notas:
-- Los archivos creados son plantilla para empezar. Añade tu lógica de detección y pruebas en `collision_logic.py` y procesa imágenes o datos en `main.py`.
-- El entorno `crash_ai` en `D:\miniconda\envs\crash_ai` contiene todas las dependencias. No es necesario crear otro virtualenv.
-- Para agregar archivos de entrada, pon imágenes/datos en `data/input/` y el script los procesará.
+---
+
+## 🚀 How to Run
+
+### 1. Prerequisites
+You must have **Python 3.12** (or higher) installed. Using a virtual environment (Conda or venv) is highly recommended.
+
+### 2. Install Dependencies
+Run the following command in your terminal within the project folder:
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Run the Dashboard (Web Interface)
+To use the interactive interface and upload your own videos:
+```bash
+streamlit run app.py
+```
+
+### 4. Run via Console (CLI)
+To process videos in bulk via command line:
+```bash
+python main.py --video ccd_crash_01.mp4
+```
+
+---
+
+## 📥 What to Download?
+
+1. **Python:** Download it from [python.org](https://www.python.org/).
+2. **Models (Automatic):** The system will automatically download the `yolov8n.pt` weight file the first time you run it. You do not need to download it manually.
+3. **Sample Videos:** Ensure your `.mp4` videos are placed in the `data/input/` directory.
+
+---
+
+## 📂 Output Structure (Evidence)
+
+When an accident is detected, the system generates:
+- **Processed Video:** Located in `data/output/` with highlighted collisions.
+- **JSON Report:** Technical data of every detected crash.
+- **Forensic Captures:** High-resolution `.jpg` images of the impact moment in `evidence/frames/`.
+- **Event Log:** A cumulative `evidence/events.csv` file tracking all detected accidents.
+
+---
+
+## 📚 Academic References
+- **ByteTrack:** Multi-Object Tracking by Associating Every Detection Box (ECCV 2022).
+- **ISO 22839:** Intelligent transport systems — Forward vehicle collision warning systems.
+- **CADP:** A Car Accident Detection and Prediction dataset for surveillance.
+
+---
+**Author:** Justin Gómez Coello
+**Version:** 2.0 (Academic Grade)
