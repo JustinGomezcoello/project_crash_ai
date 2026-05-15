@@ -75,21 +75,50 @@ def draw_box(frame, box, label, color=(0, 255, 0), thickness=2):
     return frame
 
 
-def draw_alert(frame, frame_num, confidence=None):
+def draw_alert(frame, frame_num, confidence=None, severity=""):
     """Dibuja alerta de colisión detectada en el frame."""
     h, w = frame.shape[:2]
     
-    # Banner rojo en la parte superior
-    cv2.rectangle(frame, (0, 0), (w, 60), (0, 0, 255), -1)
+    # Colores por severidad
+    bg_color = (0, 0, 255) # Rojo por defecto
+    if severity == "Leve":
+        bg_color = (0, 165, 255) # Naranja
+    elif severity == "Moderado":
+        bg_color = (0, 100, 255) # Naranja oscuro
+    elif severity == "Severo":
+        bg_color = (0, 0, 255) # Rojo
+        
+    # Banner en la parte superior
+    cv2.rectangle(frame, (0, 0), (w, 60), bg_color, -1)
     
     # Texto de alerta
-    text = f"COLISION DETECTADA - Frame: {frame_num}"
+    text = f"COLISION DETECTADA"
+    if severity:
+        text += f" [{severity.upper()}]"
+    else:
+        text += f" - Frame: {frame_num}"
+    
     cv2.putText(frame, text, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 2)
     
     if confidence:
-        confidence_text = f"Confianza: {confidence:.2f}"
+        confidence_text = f"Conf: {confidence:.2f}"
         cv2.putText(frame, confidence_text, (w - 250, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
     
+    return frame
+
+def draw_trajectory(frame, track, color=(0, 255, 255), thickness=2):
+    """Dibuja la estela de la trayectoria (historial de centros) de un track."""
+    if len(track.boxes) < 2:
+        return frame
+    
+    points = []
+    for box in track.boxes:
+        c = get_box_center(box)
+        points.append([int(c[0]), int(c[1])])
+        
+    pts = np.array(points, np.int32)
+    pts = pts.reshape((-1, 1, 2))
+    cv2.polylines(frame, [pts], False, color, thickness)
     return frame
 
 

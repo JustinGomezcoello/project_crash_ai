@@ -15,10 +15,7 @@ from config import (
     TARGET_WIDTH, TARGET_HEIGHT, TARGET_FPS, MAINTAIN_ASPECT_RATIO
 )
 from collision_logic import SimpleTracker, analyze_collisions
-from utils import (
-    ensure_dirs, list_input_files, draw_box, draw_alert, 
-    format_time, save_report
-)
+from utils import ensure_dirs, list_input_files, draw_box, draw_alert, format_time, save_report, draw_trajectory
 
 
 class VideoProcessor:
@@ -84,6 +81,10 @@ class VideoProcessor:
         collisions_detected = []
         collision_frames = {}  # {frame_num: [(tid1, tid2, conf), ...]}
         
+        alert_frames_remaining = 0
+        current_max_conf = 0.0
+        current_colliding_tracks = set()
+        
         print("[INFO] Iniciando detección...")
         
         while True:
@@ -118,14 +119,26 @@ class VideoProcessor:
             collisions = analyze_collisions(tracks)
             if collisions:
                 collision_frames[frame_num] = collisions
-                for tid1, tid2, fn, conf in collisions:
+                alert_frames_remaining = 45  # Mantener la alerta en pantalla (aprox 1.5s)
+                current_max_conf = max([c[3] for c in collisions], default=0)
+                current_severity = collisions[0][4] if collisions else ""
+                current_colliding_tracks.clear()
+                
+                for tid1, tid2, fn, conf, severity in collisions:
+                    current_colliding_tracks.add(tid1)
+                    current_colliding_tracks.add(tid2)
                     collisions_detected.append({
                         'frame': frame_num,
                         'timestamp': format_time(frame_num, fps),
                         'track_id_1': tid1,
                         'track_id_2': tid2,
-                        'confidence': float(conf)
+                        'confidence': float(conf),
+                        'severity': severity
                     })
+            elif alert_frames_remaining > 0:
+                alert_frames_remaining -= 1
+                if alert_frames_remaining == 0:
+                    current_colliding_tracks.clear()
             
             # Dibujar en frame
             frame_annotated = frame.copy()
@@ -136,18 +149,17 @@ class VideoProcessor:
                     box = track.get_current_box()
                     color = (0, 255, 0)  # Verde por defecto
                     
-                    # Colorear de rojo si tiene colisión activa
-                    for tid1, tid2, fn, conf in collisions:
-                        if (track_id == tid1 or track_id == tid2) and frame_num == fn:
-                            color = (0, 0, 255)  # Rojo
+                    if track_id in current_colliding_tracks:
+                        color = (0, 0, 255)  # Rojo si esta colisionando (o ha colisionado recientemente)
                     
                     label = f"ID:{track_id}"
                     frame_annotated = draw_box(frame_annotated, box, label, color)
+                    # Dibujar trayectoria (estela)
+                    frame_annotated = draw_trajectory(frame_annotated, track, color, thickness=1)
             
             # Dibujar alerta de colisión
-            if collisions:
-                max_conf = max([c[3] for c in collisions], default=0)
-                frame_annotated = draw_alert(frame_annotated, frame_num, max_conf)
+            if alert_frames_remaining > 0:
+                frame_annotated = draw_alert(frame_annotated, frame_num, current_max_conf, current_severity if "current_severity" in locals() else "")
             
             # Escribir frame
             out.write(frame_annotated)
@@ -229,3 +241,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
