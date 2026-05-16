@@ -100,6 +100,4 @@ When an accident is detected, the system generates:
 - **ISO 22839:** Intelligent transport systems — Forward vehicle collision warning systems.
 - **CADP:** A Car Accident Detection and Prediction dataset for surveillance.
 
----
-**Author:** Justin Gómez Coello
-**Version:** 2.0 (Academic Grade)
+

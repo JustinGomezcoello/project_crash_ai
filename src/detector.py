@@ -52,6 +52,9 @@ class VehicleDetector:
     def reset(self):
         """Reinicia el estado de tracks (llamar al procesar un nuevo video)."""
         self.tracks.clear()
+        # Ultralytics track(persist=True) guarda el estado internamente.
+        # Para purgarlo por completo entre videos, recargamos el modelo.
+        self._load_model()
 
     def process_frame(self, frame) -> dict:
         """

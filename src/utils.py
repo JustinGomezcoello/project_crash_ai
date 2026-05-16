@@ -138,7 +138,7 @@ def draw_alert(frame, frame_num: int, confidence: float = None,
     cv2.line(frame, (0, 72), (w, 72), (255, 255, 255), 1)
 
     # Texto principal
-    main_text = "⚠ COLISIÓN DETECTADA"
+    main_text = "!! COLISION DETECTADA"
     if severity:
         main_text += f"  [{severity.upper()}]"
     cv2.putText(frame, main_text, (18, 48),
@@ -168,7 +168,7 @@ def draw_info_panel(frame, tracks: dict, fps: float = 10.0,
     panel_lines = [
         f"Tiempo: {ts}",
         f"Frame: {frame_num}",
-        f"Vehículos: {active}",
+        f"Vehiculos: {active}",
     ]
     y_start = h - 10 - len(panel_lines) * 22
     # Fondo

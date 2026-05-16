@@ -18,21 +18,65 @@ Arquitectura inspirada en:
 """
 
 import os
+import glob
+import csv
 import cv2
 from datetime import datetime
 from pathlib import Path
 
 from config import (
     OUTPUT_DIR, TARGET_FPS, YOLO_TRACKER,
+    CLEAR_OUTPUT_ON_RUN,
+    EVIDENCE_FRAMES_DIR, EVENTS_CSV,
 )
 from src.detector import VehicleDetector
-from src.collision_logic import analyze_collisions, reset_state
+from src.collision_logic import analyze_collisions, reset_state, set_frame_dimensions
 from src.utils import (
     ensure_dirs, list_input_files,
     draw_box, draw_alert, draw_trajectory, draw_info_panel,
     format_time, save_report,
     save_evidence_frame, append_event_csv,
 )
+
+
+def clear_previous_outputs():
+    """
+    LIMPIEZA TOTAL: borra TODOS los archivos generados en ejecuciones
+    anteriores para que solo queden los resultados de la ejecucion actual.
+
+    Directorios limpiados:
+      - data/output/   → TODOS los archivos (videos, reportes, cualquiera)
+      - evidence/frames/ → TODOS los frames de evidencia
+      - evidence/events.csv → se borra y recrea con cabecera limpia
+    """
+    # ── Borrar TODO en data/output/ ─────────────────────────────────────
+    if os.path.isdir(OUTPUT_DIR):
+        for f in os.listdir(OUTPUT_DIR):
+            fp = os.path.join(OUTPUT_DIR, f)
+            if os.path.isfile(fp):
+                try:
+                    os.remove(fp)
+                except OSError:
+                    pass
+
+    # ── Borrar TODO en evidence/frames/ ─────────────────────────────────
+    if os.path.isdir(EVIDENCE_FRAMES_DIR):
+        for f in os.listdir(EVIDENCE_FRAMES_DIR):
+            fp = os.path.join(EVIDENCE_FRAMES_DIR, f)
+            if os.path.isfile(fp):
+                try:
+                    os.remove(fp)
+                except OSError:
+                    pass
+
+    # ── Borrar events.csv y recrear con cabecera limpia ─────────────────
+    try:
+        if os.path.exists(EVENTS_CSV):
+            os.remove(EVENTS_CSV)
+    except OSError:
+        pass
+
+    print("[INFO] Resultados anteriores eliminados (limpieza automatica)")
 
 
 class VideoProcessor:
@@ -54,6 +98,7 @@ class VideoProcessor:
         ensure_dirs()
         tracker = tracker or YOLO_TRACKER
         self.detector = VehicleDetector(tracker=tracker, confidence=confidence)
+        self._cleaned = False  # flag para evitar doble limpieza
 
     # ------------------------------------------------------------------ #
 
@@ -82,6 +127,11 @@ class VideoProcessor:
             print(f"[ERROR] Archivo no encontrado: {video_path}")
             return None
 
+        # Limpiar salidas de la ejecucion anterior (solo la primera vez)
+        if CLEAR_OUTPUT_ON_RUN and not self._cleaned:
+            clear_previous_outputs()
+            self._cleaned = True
+
         video_name = os.path.basename(video_path)
         print(f"\n[INFO] Procesando: {video_name}")
 
@@ -96,7 +146,10 @@ class VideoProcessor:
         frame_w      = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         frame_h      = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        print(f"[INFO] Resolución: {frame_w}x{frame_h} | FPS: {fps} | Frames: {total_frames}")
+        # Informar al motor de colisiones las dimensiones reales del frame
+        set_frame_dimensions(frame_w, frame_h)
+
+        print(f"[INFO] Resolucion: {frame_w}x{frame_h} | FPS: {fps} | Frames: {total_frames}")
 
         # ── Preparar salida de video ──────────────────────────────────────
         if output_video is None:

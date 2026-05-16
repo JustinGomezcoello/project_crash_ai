@@ -149,26 +149,31 @@ class TestCollisionDetection:
 
 class TestSingleVehicleCrash:
     def test_large_vehicle_sudden_stop(self):
-        """Vehículo grande que para abruptamente → crash detectado."""
-        # Velocidad histórica alta (mueve 30px/frame) luego se para
+        """Vehículo muy grande + parada brusca ≥70% → crash detectado."""
+        from src.collision_logic import set_frame_dimensions
+        # Frame 640x480, vehículo ocupa ~450x340 = 153.000px = 50% del frame
+        set_frame_dimensions(640, 480)
         boxes = [
-            [100, 100, 500, 400],
-            [130, 100, 530, 400],
-            [160, 100, 560, 400],
-            [190, 100, 590, 400],
-            [191, 100, 591, 400],  # parada casi total
+            [0,  50, 450, 390],   # mueve 40px/frame
+            [40, 50, 490, 390],
+            [80, 50, 530, 390],
+            [120, 50, 570, 390],
+            [121, 50, 571, 390],  # parada casi total (drop ~97%)
+            [121, 50, 571, 390],
         ]
         t = make_track(1, boxes)
-        is_crash, conf, sev = detect_single_vehicle_crash(t)
-        assert is_crash
+        is_crash, conf, sev = detect_single_vehicle_crash(t, frame_height=480, frame_width=640)
+        assert is_crash, "Vehiculo enorme con frenada brusca debe detectarse"
         assert conf > 0
         assert sev in ("Moderado", "Severo")
 
     def test_small_vehicle_no_crash(self):
         """Vehículo pequeño que frena normal → sin crash."""
-        boxes = [[100, 100, 130, 130]] * 5  # área ~900px, muy pequeño
+        from src.collision_logic import set_frame_dimensions
+        set_frame_dimensions(1280, 720)
+        boxes = [[100, 100, 130, 130]] * 5  # area ~900px << 35% del frame
         t = make_track(1, boxes)
-        is_crash, conf, sev = detect_single_vehicle_crash(t)
+        is_crash, conf, sev = detect_single_vehicle_crash(t, frame_height=720, frame_width=1280)
         assert not is_crash
 
 
